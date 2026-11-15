@@ -1,0 +1,161 @@
+package dbms;
+
+import dbms.engine.Condition;
+import dbms.engine.Database;
+import dbms.engine.QueryService;
+import dbms.model.Column;
+import dbms.model.DataType;
+import dbms.model.Row;
+import dbms.model.Table;
+import dbms.model.TableSchema;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class QueryServiceUpdateTest {
+
+    private Database database;
+    private QueryService queryService;
+
+    @BeforeEach
+    void setUp() {
+        TableSchema schema = new TableSchema(
+                "subscribers",
+                List.of(
+                        new Column("subscriber_id", DataType.INTEGER, true, false),
+                        new Column("full_name", DataType.STRING, false, false),
+                        new Column("phone_number", DataType.STRING, false, false),
+                        new Column("registration_date", DataType.DATE, false, false),
+                        new Column("balance", DataType.DOUBLE, false, false),
+                        new Column("is_active", DataType.BOOLEAN, false, false)
+                )
+        );
+
+        Table subscribers = new Table(schema);
+
+        database = new Database("telecom");
+        database.addTable(subscribers);
+
+        subscribers.addRow(createSubscriber(schema, 1, 300.0));
+        subscribers.addRow(createSubscriber(schema, 2, 700.0));
+        subscribers.addRow(createSubscriber(schema, 3, 1000.0));
+
+        queryService = new QueryService(database);
+    }
+
+    @Test
+    void shouldUpdateRowsMatchingCondition() {
+        Condition condition = new Condition(
+                "balance",
+                Condition.Operator.LESS,
+                800.0
+        );
+
+        int updated = queryService.updateRows(
+                "subscribers",
+                condition,
+                Map.of("balance", 900.0)
+        );
+
+        assertEquals(2, updated);
+
+        assertEquals(900.0, getBalance(1));
+        assertEquals(900.0, getBalance(2));
+        assertEquals(1000.0, getBalance(3));
+    }
+
+    @Test
+    void shouldUpdateAllRowsWhenConditionIsNull() {
+        int updated = queryService.updateRows(
+                "subscribers",
+                null,
+                Map.of("is_active", false)
+        );
+
+        assertEquals(3, updated);
+        assertEquals(false, getValue(1, "is_active"));
+        assertEquals(false, getValue(2, "is_active"));
+        assertEquals(false, getValue(3, "is_active"));
+    }
+
+    @Test
+    void shouldReturnZeroWhenNoRowsMatch() {
+        Condition condition = new Condition(
+                "balance",
+                Condition.Operator.GREATER,
+                2000.0
+        );
+
+        int updated = queryService.updateRows(
+                "subscribers",
+                condition,
+                Map.of("balance", 500.0)
+        );
+
+        assertEquals(0, updated);
+        assertEquals(300.0, getBalance(1));
+    }
+
+    @Test
+    void shouldRejectPrimaryKeyUpdate() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> queryService.updateRows(
+                        "subscribers",
+                        null,
+                        Map.of("subscriber_id", 10)
+                )
+        );
+
+        assertEquals(1, getValue(1, "subscriber_id"));
+    }
+
+    @Test
+    void shouldRejectInvalidValueWithoutChangingRows() {
+        assertThrows(
+                IllegalArgumentException.class,
+                () -> queryService.updateRows(
+                        "subscribers",
+                        null,
+                        Map.of("balance", "не число")
+                )
+        );
+
+        assertEquals(300.0, getBalance(1));
+        assertEquals(700.0, getBalance(2));
+        assertEquals(1000.0, getBalance(3));
+    }
+
+    private Row createSubscriber(
+            TableSchema schema,
+            int id,
+            double balance
+    ) {
+        return new Row(
+                schema,
+                Map.of(
+                        "subscriber_id", id,
+                        "full_name", "Иванов Иван Иванович",
+                        "phone_number", "+79991234567",
+                        "registration_date", LocalDate.of(2026, 11, 11),
+                        "balance", balance,
+                        "is_active", true
+                )
+        );
+    }
+
+    private double getBalance(int id) {
+        return (Double) getValue(id, "balance");
+    }
+
+    private Object getValue(int id, String columnName) {
+        Row row = database.getTable("subscribers").getRow(id);
+        return row.getValue(columnName);
+    }
+}

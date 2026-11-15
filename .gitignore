@@ -1,0 +1,8 @@
+/target/
+/out/
+/.idea/
+*.iml
+/data/telecom.db
+/data/telecom.db.idx
+/data/telecom.db.tmp
+/data/telecom.db.idx.tmp
