@@ -117,6 +117,36 @@ public class Database {
     }
 
     /**
+     * Удаляет таблицу вместе с её записями, индексами и объявленными в ней внешними ключами.
+     *
+     * @param tableName имя удаляемой таблицы
+     * @throws IllegalArgumentException если имя не задано или таблица не найдена
+     * @throws IllegalStateException если на таблицу ссылается другая таблица
+     */
+    public void dropTable(String tableName) {
+        Table table = getTable(tableName);
+        String name = table.getName();
+
+        for (ForeignKey key : foreignKeys) {
+            if (key.getReferencedTableName().equalsIgnoreCase(name)
+                    && !key.getTableName().equalsIgnoreCase(name)) {
+                throw new IllegalStateException(
+                        "Нельзя удалить таблицу: на неё ссылается " + key.getTableName()
+                );
+            }
+        }
+
+        for (int i = foreignKeys.size() - 1; i >= 0; i--) {
+            if (foreignKeys.get(i).getTableName().equalsIgnoreCase(name)) {
+                foreignKeys.remove(i);
+            }
+        }
+
+        indexManager.removeTableIndexes(name);
+        tables.remove(normalize(name));
+    }
+
+    /**
      * Возвращает все зарегистрированные таблицы.
      *
      * @return неизменяемая карта таблиц

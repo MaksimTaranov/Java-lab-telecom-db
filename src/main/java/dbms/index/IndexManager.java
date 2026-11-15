@@ -12,13 +12,7 @@ import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Управляет индексами таблиц базы данных.
@@ -410,6 +404,27 @@ public class IndexManager {
         indexes.putAll(loaded);
 
         rebuild(database);
+    }
+
+    /**
+     * Удаляет все индексы указанной таблицы.
+     *
+     * @param tableName имя таблицы
+     * @throws IllegalArgumentException если имя таблицы не задано
+     */
+    public void removeTableIndexes(String tableName) {
+        String name = normalize(tableName);
+        List<IndexKey> keysToRemove = new ArrayList<>();
+
+        for (IndexKey key : indexes.keySet()) {
+            if (key.tableName().equals(name)) {
+                keysToRemove.add(key);
+            }
+        }
+
+        for (IndexKey key : keysToRemove) {
+            indexes.remove(key);
+        }
     }
 
     /**
