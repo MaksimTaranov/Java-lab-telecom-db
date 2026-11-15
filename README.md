@@ -199,3 +199,11 @@ public class IndexBenchmark {
 ## Вывод
 
 TelecomDB выполняет основные операции с записями, проверяет ключи и сохраняет данные между запусками. Индекс по номеру телефона позволяет получать строки по первичным ключам при точном поиске. Ядро обновляет индекс при добавлении, изменении и удалении записей.
+
+## Источники
+
+1. Oracle Java SE 17. [Интерфейс Map](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/util/Map.html).
+2. Oracle Java SE 17. [Класс DataInputStream](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/DataInputStream.html) и [класс DataOutputStream](https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/io/DataOutputStream.html).
+3. Apache Maven. [Introduction to the Build Lifecycle](https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html).
+4. [Руководство JUnit 5.11.4](https://docs.junit.org/5.11.4/user-guide/).
+5. Хабр. [Как устроено индексирование баз данных](https://habr.com/ru/companies/ruvds/articles/724066/).
